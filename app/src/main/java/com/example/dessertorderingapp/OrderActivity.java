@@ -3,8 +3,12 @@ package com.example.dessertorderingapp;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -15,6 +19,8 @@ import android.widget.Toast;
 
 public class OrderActivity extends AppCompatActivity
         implements AdapterView.OnItemSelectedListener{
+
+    private static final String TAG = OrderActivity.class.getSimpleName();;
 
     /**
      * Sets the content view to activity_order, and gets the intent and its
@@ -54,6 +60,36 @@ public class OrderActivity extends AppCompatActivity
         if (spinner != null) {
             spinner.setAdapter(adapter);
         }
+
+        EditText editText = findViewById(R.id.editTextPhone);
+        if (editText != null)
+            // If view is found, set the listener for editText.
+            editText.setOnEditorActionListener(
+                    new TextView.OnEditorActionListener() {
+                        /**
+                         * Responds to the pressed key and calls a method to dial
+                         * the phone number.
+                         * @param textView  The view that was clicked.
+                         * @param actionId  Identifier of the action.
+                         * @param keyEvent  If triggered by an Enter key, this is the
+                         *                  event.
+                         * @return          True, the key was entered, or false.
+                         */
+                        @Override
+                        public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+                            // Start with no event.
+                            boolean handled = false;
+
+                            // If the action for the keyboard is defined as
+                            // IME_ACTION_SEND (android:imeOptions="actionSend" in the
+                            // layout), call the dialNumber method and return true.
+                            if (actionId == EditorInfo.IME_ACTION_SEND) {
+                                dialNumber();
+                                handled = true;
+                            }
+                            return handled;
+                        }
+                    });
 
     }
 
@@ -104,15 +140,48 @@ public class OrderActivity extends AppCompatActivity
 
     // Interface callback for when any spinner item is selected.
     @Override
-    public void onItemSelected(AdapterView<?> adapterView,
-                               View view, int i, long l) {
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         String spinnerLabel = adapterView.getItemAtPosition(i).toString();
-        displayToast(spinnerLabel);
+        if(!spinnerLabel.equals("Select a device")){
+            displayToast(spinnerLabel);
+        }
     }
 
     // Interface callback for when no spinner item is selected.
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
-        // Do nothing.
+        adapterView.setSelection(0);
+    }
+
+    public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+        boolean handled = false;
+        if (actionId == EditorInfo.IME_ACTION_SEND) {
+            dialNumber();
+            handled = true;
+        }
+        return handled;
+    }
+    
+    private void dialNumber() {
+        // Find the editText_main view.
+        EditText editText = findViewById(R.id.editTextPhone);
+        String phoneNum = null;
+        // If the editText field is not null, 
+        // concatenate "tel: " with the phone number string.
+        if (editText != null) phoneNum = "tel:" +
+                editText.getText().toString();
+        // Optional: Log the concatenated phone number for dialing.
+        Log.d(TAG, "dialNumber: " + phoneNum);
+        // Specify the intent.
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        // Set the data for the intent as the phone number.
+        intent.setData(Uri.parse(phoneNum));
+        // If the intent resolves to a package (app),
+        // start the activity with the intent.
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        } else {
+            Log.d("ImplicitIntents", "Can't handle this!");
+        }
     }
 }
