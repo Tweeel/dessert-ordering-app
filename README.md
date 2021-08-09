@@ -1,4 +1,4 @@
-DroidCafeInput - Solution Code
+DroidCafeInput
 ==============================
 
 This app created from the Basic Activity template lets a user tap an image
